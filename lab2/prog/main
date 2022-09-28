@@ -1,0 +1,24 @@
+//#include "../test2/pch.h"
+#include "Lib2.h"
+#include <iostream>
+#include "lab2.h"
+using namespace Prog2;
+
+int main() {
+	output("The equation of the Archimedean spiral in polar coordinates is r = a + b*f");
+	out() << std::endl;
+	double a, b;
+	const char* mes = "\nEnter a: ";
+	get_num(a, mes);
+	mes = "\nEnter b: ";
+	get_num(b, mes);
+	try {
+		Line line(a, b);
+		dialog(line);
+	}
+	catch (const std::exception& msg) {
+		output(msg.what());
+	}
+	const Line l;
+	return 0;
+};
