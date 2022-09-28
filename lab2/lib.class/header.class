@@ -1,0 +1,19 @@
+#pragma once
+
+class Line {
+private:
+	double a;
+	double b;
+public:
+	Line(double a = 1, double b = 1);
+	double get_a() const;
+	double get_b() const;
+	Line& set_a(double a);
+	Line& set_b(double b);
+	double dist(double point) const;
+	double sector_square(double point1, double poin2) const;
+	double figure_square(double point) const;
+	double circle_square(double cir) const;
+	double arc_lenght(double point) const;
+	double radius(double point) const;
+};
