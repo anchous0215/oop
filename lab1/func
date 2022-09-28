@@ -1,0 +1,266 @@
+#include <iostream>
+#include "lab1.h"
+
+namespace Prog1 {
+	using std::cout;
+	using std::cin;
+	using std::endl;
+
+	Matrix* init_matrix(int h, int m) {
+		try {
+			Matrix* mat = new Matrix;
+			mat->high = h;
+			mat->might = new int;
+			*mat->might = m;
+			mat->lines = nullptr;
+			return mat;
+		}
+		catch (std::bad_alloc& ba) {
+			std::cout « "Error, memory allocation problem in init_matrix1" « ba.what() « std::endl;
+			return nullptr;
+		}
+	}
+
+	void test(int& h, const char* mes) {
+		bool test = true;
+		get_num(h, mes);
+		do {
+			if (h < 1) {
+				test = false;
+				cout « "Please, enter correct choice" « endl;
+				get_num(h, mes);
+			}
+			else {
+				test = true;
+			}
+		} while (!test);
+	}
+
+	void get_numbers(Matrix* mat) {
+		int x, y, n;
+		while (true) {
+			const char* mes = "if you want add number enter 1 or enter 0 if you finished: ";
+			get_num(n, mes);
+			if (n == 0) {
+				break;
+			}
+			mes = "Enter number, which you want to add: ";
+			get_num(n, mes);
+			mes = "Enter string in which you want add the number: ";
+			get_num(y, mes);
+			while (y<1 || y>mat->high) {
+				cout « "You can't chose this number";
+				get_num(y, mes);
+			}
+			mes = "Enter column in which you want add the number: ";
+			get_num(x, mes);
+			while (x<1 || x>*mat->might) {
+				cout « "You can't chose this number";
+				get_num(x, mes);
+			}
+			Line* line = found_line(mat, y);
+			add_elem(line, x, n);
+			//output(mat);
+		}
+	}
+
+	Line* found_line(Matrix* mat, int y) {
+		Line* tmp = mat->lines;
+		while (tmp != nullptr) {
+			if (tmp->y == y) {
+				return tmp;
+			}
+			else {
+				tmp = tmp->next;
+			}
+		}
+		Line* line = init_line(mat, y);
+		return line;
+	}
+
+	Line* init_line(Matrix* mat, int y) {
+		try {
+			Line* line = new Line;
+			line->y = y;
+			line->elems = nullptr;
+			line->next = mat->lines;
+			mat->lines = line;
+			return line;
+		}
+		catch (std::bad_alloc& ba) {
+			std::cout « "Error, memory allocation problem in init_line" « ba.what() « std::endl;
+			return nullptr;
+		}
+	}
+
+	void add_elem(Line* line, int x, int num) {
+
+		Elem* elem = found_elem(line, x);
+		if (elem == nullptr) {
+			try {
+				elem = new Elem;
+				elem->x = x;
+				elem->num = num;
+				elem->next = line->elems;
+				line->elems = elem;
+			}
+			catch (std::bad_alloc& ba) {
+				std::cout « "Error, memory allocation problem in add_elem" « ba.what() « std::endl;
+			}
+		}
+		else {
+			elem->num = num;
+		}
+	}
+
+	Elem* found_elem(Line* line, int x) {
+		Elem* ptr = line->elems;
+		while (ptr != nullptr) {
+			if (ptr->x == x) {
+				return ptr;
+			}
+			ptr = ptr->next;
+		}
+		return ptr;
+	}
+
+	int* get_min(Matrix* mat) {
+		int h = mat->high;
+		int m = *mat->might;
+		try {
+			int* min = new int[h]();
+			Line* tmp = mat->lines;
+			while (tmp != nullptr) {
+				int s = 0;
+				int coord = 1;
+				Elem* ptr = tmp->elems;
+				while (ptr != nullptr) {
+					if ((ptr->x == 1) && (ptr->num > 0) && (s == 0)) {
+						coord = 2;
+					}
+					if (ptr->num < s) {
+						s = ptr->num;
+						coord = ptr->x;
+					}
+					ptr = ptr->next;
+				}
+				min[tmp->y - 1] = m - coord + 1;
+				tmp = tmp->next;
+			}
+			return min;
+		}
+		catch (std::bad_alloc& ba) {
+			std::cout « "Error, memory allocation problem in get_min" « ba.what() « std::endl;
+			return nullptr;
+		}
+	}
+
+	Matrix* init_matrix(Matrix* matrix, int* min) {
+		try {
+			Matrix* mat = new Matrix;
+			int h = matrix->high;
+			mat->high = h;
+			mat->might = new int[h];
+			mat->lines = matrix->lines;
+			for (int i = 0; i < mat->high; i++) {
+				if (min[i] == 0) {
+					mat->might[i] = *matrix->might;
+				}
+				else {
+					mat->might[i] = min[i];
+				}
+			}
+			return mat;
+		}
+		catch (std::bad_alloc& ba) {
+			std::cout « "Error, memory allocation problem in init_matrix2" « ba.what() « std::endl;
+			return nullptr;
+		}
+	}
+
+	void output(Matrix* mat) {
+		for (int i = 0; i < mat->high; i++) {
+			for (int j = 1; j < *mat->might + 1; j++) {
+				std::cout « found(mat, j, i) « " ";
+			}
+			std::cout « std::endl;
+		}
+	}
+
+	void output(Matrix* mat, int m) {
+		for (int i = 0; i < mat->high; i++) {
+			for (int j = 1; j < mat->might[i] + 1; j++) {
+				std::cout « found(mat, j, i, m) « " ";
+			}
+			std::cout « std::endl;
+		}
+	}
+
+	int found(Matrix* mat, int c, int i) {
+		Line* tmp = mat->lines;
+		while (tmp != nullptr) {
+			if (tmp->y == i + 1) {
+				Elem* ptr = tmp->elems;
+				while (ptr != nullptr) {
+					if (ptr->x == c) {
+						return ptr->num;
+					}
+					ptr = ptr->next;
+				}
+			}
+			tmp = tmp->next;
+		}
+		return 0;
+	}
+
+	int found(Matrix* mat, int c, int i, int m) {
+		Line* tmp = mat->lines;
+		while (tmp != nullptr) {
+			if (tmp->y == i + 1) {
+				Elem* ptr = tmp->elems;
+				while (ptr != nullptr) {
+					if (ptr->x - m + mat->might[i] == c) {
+						return ptr->num;
+					}
+					ptr = ptr->next;
+				}
+			}
+			tmp = tmp->next;
+		}
+		return 0;
+	}
+
+	void erase(Matrix* mat1, int* min, Matrix* mat2) {
+		delete[] min;
+		del_elems(mat1);
+		del_lines(mat1);
+		delete mat1->might;
+		delete[] mat2->might;
+		delete mat1;
+		delete mat2;
+	}
+
+	void del_elems(Matrix* mat1) {
+		Line* tmp = mat1->lines;
+		while (tmp != nullptr) {
+			Elem* ptr1 = tmp->elems;
+			Elem* ptr2 = tmp->elems;
+			while (ptr2 != nullptr) {
+				ptr1 = ptr2;
+				ptr2 = ptr2->next;
+				delete ptr1;
+			}
+			tmp = tmp->next;
+		}
+	}
+
+	void del_lines(Matrix* mat1) {
+		Line* tmp1 = mat1->lines;
+		Line* tmp2 = mat1->lines;
+		while (tmp2 != nullptr) {
+			tmp1 = tmp2;
+			tmp2 = tmp2->next;
+			delete tmp1;
+		}
+	}
+}
