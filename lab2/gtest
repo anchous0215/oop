@@ -1,0 +1,74 @@
+#include "pch.h"
+#include"../lib2/Lib2.h"
+#include"../main2/lab2.h"
+
+TEST(LineConstructor, DefaultConstructor) {
+	Line l;
+	ASSERT_EQ(1, l.get_a());
+	ASSERT_EQ(1, l.get_b());
+}
+
+TEST(LineConstructor, 1Constructor) {
+	Line l(2);
+	ASSERT_EQ(2, l.get_a());
+	ASSERT_EQ(1, l.get_b());
+}
+
+TEST(LineConstructor, full_constructor) {
+	Line l(2, 3);
+	ASSERT_EQ(2, l.get_a());
+	ASSERT_EQ(3, l.get_b());
+}
+
+TEST(LineMethods, setters) {
+	Line l;
+	l.set_a(2);
+	ASSERT_EQ(2, l.get_a());
+	l.set_b(3);
+	ASSERT_EQ(3, l.get_b());
+}
+
+
+TEST(LineMethods, arifm) {
+	Line l;
+	ASSERT_EQ(7.28, l.dist(360));
+
+	double point1 = l.dist(30);
+	double point2 = l.dist(60);
+	double f = (60-30) * 3.14 / 180;
+	double b = (f * (point1 * point1 + point1 * point2 + point2 * point2) / 6);
+	ASSERT_EQ(b, l.sector_square(30, 60));
+
+	double c = 2 - 1;
+	b = l.get_b();
+	double a = l.get_a();
+	f = ((2 * 2 * 2 - c * c * c) * (b + a) * (b + a) * 3.14 / 3.0);
+	ASSERT_EQ(f, l.figure_square(2));
+
+	f = 6 * 3 * l.figure_square(1);
+	ASSERT_EQ(f, l.circle_square(3));
+
+	double ang = 30 * 3.14 / 180;
+	double s = sqrt(1 + ang * ang);
+	double ll = log(ang + s);
+	f = (b / 2.0 * (ang * s + ll));
+	ASSERT_EQ(f, l.arc_lenght(30));
+
+	ang = 30 * 3.14 / 180;
+	c = ang * ang + 1;
+	double ccc = c * c * c;
+	s = sqrt(ccc);
+	f = (a + b * s / (c + 1));
+	ASSERT_EQ(f, l.radius(30));
+}
+
+TEST(constant, 1) {
+	const Line l;
+	SUCCEED(l.radius(30));
+	SUCCEED(l.arc_lenght(30));
+}
+
+TEST(LineConstructor, TestException)
+{
+	ASSERT_ANY_THROW(Line(-1, 2));
+}
