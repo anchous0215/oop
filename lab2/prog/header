@@ -1,0 +1,57 @@
+#ifndef LAB_2
+#define LAB_2
+
+#include <iostream>
+#include "Lib2.h"
+namespace Prog2 {
+
+	template <class T>
+	void output(T a, std::ostream& out = std::cout) {
+		out << a;
+	}
+
+	template <class T>
+	void input(T& a, std::istream& in = std::cin) {
+		in >> a;
+	}
+
+	inline std::istream& in (std::istream& in = std::cin) {
+		return in;
+	}
+
+	inline std::ostream& out(std::ostream& out = std::cout) {
+		return out;
+	}
+
+	template <class T>
+	void get_num(T& a, const char* mes) {
+		bool test = true;
+		while (true) {
+			output(mes);
+			input(a);
+			if (in().peek() == '\n') {
+				break;
+			}
+			else {
+				output("You chose incorrect number");
+				in().clear();
+				while (in().get() != '\n') {}
+			}
+		}
+	}
+
+	void dialog(Line& line);
+	void s_square(Line& line);
+	void test(double& h, const char* mes, int high, int less = 0);
+	void coil(Line& line);
+	void test(int& h, const char* mes);
+	void one_coil(Line& line);
+	void lenght(Line& line);
+	void rad(Line& line);
+	void change_a(Line& line);
+	void test(double& h, const char* mes);
+	void change_b(Line& line);
+	void know(Line& line);
+}
+#endif
+
