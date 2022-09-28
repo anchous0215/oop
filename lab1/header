@@ -1,0 +1,64 @@
+#ifndef LAB_1
+#define LAB_1
+
+namespace Prog1 {
+	struct Elem {
+		int x;
+		int num;
+		struct Elem* next;
+	};
+
+	struct Line {
+		int y;
+		struct Line* next;
+		struct Elem* elems;
+	};
+
+	struct Matrix {
+		Line* lines;
+		int high;
+		int* might;
+	};
+
+	using std::cout;
+	using std::cin;
+	using std::endl;
+	template <class T>
+	void get_num(T& a, const char* mes) {
+		bool test = true;
+		while (true) {
+			cout « mes;
+			cin » a;
+			if (cin.peek() == '\n') {
+				break;
+			}
+			else {
+				cout « "You chose incorrect number" « endl;
+				cin.clear();
+				while (cin.get() != '\n') {}
+			}
+		}
+	}
+
+	inline int is_less(double a, double b) {
+		return a < b;
+	}
+
+	Matrix* init_matrix(int h, int m);
+	void get_numbers(Matrix* mat);
+	Line* found_line(Matrix* mat, int y);
+	Line* init_line(Matrix* mat, int y);
+	void add_elem(Line* line, int x, int num);
+	Elem* found_elem(Line* line, int x);
+	void test(int& h, const char* mes);
+	int* get_min(Matrix* mat);
+	Matrix* init_matrix(Matrix* matr, int* min);
+	void output(Matrix* mat, int m);
+	void output(Matrix* mat);
+	int found(Matrix* mat, int c, int i);
+	int found(Matrix* mat, int c, int i, int m);
+	void erase(Matrix* mat1, int* min, Matrix* mat2);
+	void del_elems(Matrix* mat1);
+	void del_lines(Matrix* mat1);
+}
+#endif
