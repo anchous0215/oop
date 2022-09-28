@@ -1,0 +1,212 @@
+#include <iostream>
+#include <math.h>
+#include <cmath>
+#include "lab2.h"
+#include "Lib2.h"
+using namespace Prog2;
+
+namespace Prog2 {
+	using namespace std;
+	using std::cout;
+	using std::cin;
+	using std::endl;
+
+	void dialog(Line& line) {
+		int dialog = 0;
+		do {
+			const char* mes = "Enter what do you want make:";
+			output(mes);
+			out() << std::endl;
+			mes = "1 - change a";
+			output(mes);
+			out() << std::endl;
+			mes = "2 - change b";
+			output(mes);
+			out() << std::endl;
+			mes = "3 - know distance from point to center";
+			output(mes);
+			out() << std::endl;
+			mes = "4 - know sector square between two point";
+			output(mes);
+			out() << std::endl;
+			mes = "5 - know figure square under n's spiral coil";
+			output(mes);
+			out() << std::endl;
+			mes = "6 - know square of n's circle of spiral";
+			output(mes);
+			out() << std::endl;
+			mes = "7 - know the arc lenght from center to point";
+			output(mes);
+			out() << std::endl;
+			mes = "8 - know radius of curvature of the spiral depending on the point";
+			output(mes);
+			out() << std::endl;
+			mes = "9 - know equntion";
+			output(mes);
+			out() << std::endl;
+			mes = "0 - quit";
+			output(mes);
+			out() << std::endl;
+			get_num(dialog, "Enter your choice: ");
+
+			switch (dialog) {
+			case 1:
+				change_a(line);
+				break;
+			case 2:
+				change_b(line);
+				break;
+			case 3:
+				mes = "\nEnter angle values in degrees: ";
+				int angle;
+				get_num(angle, mes);
+				out() << std::endl;
+				output(line.dist(angle));
+				out() << std::endl;
+				break;
+			case 4:
+				s_square(line);
+				break;
+			case 5:
+				coil(line);
+				break;
+			case 6:
+				one_coil(line);
+				break;
+			case 7:
+				lenght(line);
+				break;
+			case 8:
+				rad(line);
+			case 9:
+				know(line);
+			}
+
+		} while (dialog != 0);
+	}
+
+	void change_a(Line& line) {
+		const char* mes = "\nEnter a: ";
+		double a;
+		get_num(a, mes);
+		try {
+			line.set_a(a);
+		}
+		catch (const std::exception& msg) {
+			output(msg.what());
+		}
+	}
+
+	void test(double& h, const char* mes) {
+		bool test = true;
+		get_num(h, mes);
+		do {
+			if (h < 0) {
+				test = false;
+				output("Please, enter correct choice");
+				get_num(h, mes);
+			}
+			else {
+				test = true;
+			}
+		} while (!test);
+	}
+
+	void change_b(Line& line) {
+		const char* mes = "\nEnter b: ";
+		double b;
+		get_num(b, mes);
+		line.set_b(b);
+	}
+
+	void s_square(Line& line) {
+		double high, less;
+		const char* mes = "Enter first angle in degree: ";
+		test(high, mes, 360);
+		mes = "Enter second angle in degree: ";
+		test(less, mes, 360);
+		if (less > high) {
+			double t = less;
+			less = high;
+			high = t;
+		}
+		out() << std::endl;
+		output(line.sector_square(less, high));
+		out() << std::endl;
+	}
+
+	void test(double& h, const char* mes, int high, int less) {
+		bool test = true;
+		get_num(h, mes);
+		do {
+			if ((h < less) || (h > high)) {
+				test = false;
+				output("Please, enter correct choice");
+				get_num(h, mes);
+			}
+			else {
+				test = true;
+			}
+		} while (!test);
+	}
+
+	void coil(Line& line) {
+		double n;
+		const char* mes = "Enter number of coil: ";
+		test(n, mes);
+		out() << std::endl;
+		output(line.figure_square(n));
+		out() << std::endl;
+	}
+
+	void test(int& h, const char* mes) {
+		bool test = true;
+		get_num(h, mes);
+		do {
+			if (h < 0) {
+				test = false;
+				output("Please, enter correct choice");
+				get_num(h, mes);
+			}
+			else {
+				test = true;
+			}
+		} while (!test);
+	}
+
+	void one_coil(Line& line) {
+		double n;
+		const char* mes = "Enter number of coil: ";
+		test(n, mes);
+		out() << std::endl;
+		output(line.circle_square(n));
+		out() << std::endl;
+	}
+
+	void lenght(Line& line) {
+		double n;
+		const char* mes = "Enter anglel in degree: ";
+		get_num(n, mes);
+		out() << std::endl;
+		output(line.arc_lenght(n));
+		out() << std::endl;
+	}
+
+	void rad(Line& line) {
+		double n;
+		const char* mes = "Enter anglel in degree: ";
+		get_num(n, mes);
+		out() << std::endl;
+		output(line.radius(n));
+		out() << std::endl;
+	}
+
+	void know(Line& line) {
+
+		output(line.get_a());
+		output(" + ");
+		output(line.get_b());
+		output("*f");
+		out() << std::endl;
+	}
+}
