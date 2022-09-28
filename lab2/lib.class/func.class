@@ -1,0 +1,67 @@
+#include "Lib2.h"
+#include <math.h>
+#include <cmath>
+#include <strstream>
+#include <iostream>
+
+Line::Line(double aa, double b) : b(b), a(aa)
+{
+	if (aa < 0)
+		throw std::exception("invalid radius");
+	a = aa;
+}
+
+Line& Line::set_a(double aa) {
+	if (aa < 0)
+		throw std::exception("invalid radius");
+	a = aa;
+	return *this;
+}
+
+Line& Line::set_b(double bb) {
+	b = bb;
+	return *this;
+}
+
+double Line::dist(double angle) const {
+	return (a + b * (angle / 180 * 3.14));
+}
+
+double Line::sector_square(double ang1, double ang2) const {
+	double point1 = dist(ang1);
+	double point2 = dist(ang2);
+	double f = (ang2 - ang1) * 3.14 / 180;
+	return (f * (point1 * point1 + point1 * point2 + point2 * point2) / 6);
+}
+
+double Line::figure_square(double n) const {
+	double c = n - 1;
+	return ((n * n * n - c * c * c) * (b+a) * (b+a)* 3.14 / 3.0);
+}
+
+double Line::circle_square(double n) const {
+	return (6 * n * figure_square(1));
+}
+
+double Line::arc_lenght(double n) const {
+	double ang = n * 3.14 / 180;
+	double f = sqrt(1 + ang * ang);
+	double l = log(ang + f);
+	return (b / 2.0 * (ang * f + l));
+}
+
+double Line::radius(double ang) const {
+	double f = ang * 3.14 / 180;
+	double c = f * f + 1;
+	double ccc = c * c * c;
+	double s = sqrt(ccc);
+	return (a + b * s / (c + 1));
+}
+
+double Line::get_a() const {
+	return a;
+}
+
+double Line::get_b() const {
+	return b;
+}
