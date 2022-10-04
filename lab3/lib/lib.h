@@ -7,26 +7,20 @@ struct Cell{
 	bool bo = 0;
 };
 
-struct Line {
-	int s;
-	Cell cells[9];
-	Line* next = nullptr;
-};
-
 class Loto {
 private:
 	int a;
-	Line* lines;
+	Cell cells[10][9];
 public:
-	Loto(int a = 3);
-	~Loto();
-	int get_a() const;
-	void show() const;
-	int choice() const;
-	int count(int b) const;
-	bool empt(int s, int c) const;
+	Loto() noexcept;
+	Loto(int a) ;
+	int get_a() const noexcept;
+	std::ostream& show(std::ostream& out = std::cout) const;
+	int choice(std::istream& in = std::cin) const;
+	int count(int b) const noexcept;
+	bool empt(int s, int c) const noexcept;
 	void set_b(int b);
-	int full() const;
+	int full() const noexcept;
 	void del();
 	int* free(int& c) const;
 };
@@ -41,11 +35,11 @@ void input(T& a, std::istream& in = std::cin) {
 	in >> a;
 }
 
-inline std::ostream& out(std::ostream& out = std::cout) {
+inline std::ostream& out (std::ostream& out = std::cout) noexcept{
 	return out;
 }
 
-inline std::istream& in(std::istream& in = std::cin) {
+inline std::istream& in (std::istream& in = std::cin) noexcept{
 	return in;
 }
 
@@ -67,4 +61,4 @@ void get_num(T& a, const char* mes) {
 	}
 }
 
-bool check(int mas[], int i, int c);
+bool check(const int mas[], int i, int c) noexcept;
