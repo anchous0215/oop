@@ -2,6 +2,8 @@
 #include <iostream>
 #include <sstream>
 
+constexpr int B = 9;
+
 struct Cell{
 	int num = 0;
 	bool bo = 0;
@@ -10,19 +12,31 @@ struct Cell{
 class Loto {
 private:
 	int a;
-	Cell cells[10][9];
-public:
+	static constexpr int b = 9;
+	static constexpr int c = 10;
+	Cell cells[c][b];
+public: 
 	Loto() noexcept;
-	Loto(int a) ;
+	explicit Loto(int a);
+	int get_cell(int i, int j) const noexcept;
 	int get_a() const noexcept;
+	int constexpr get_b() const noexcept;
 	std::ostream& show(std::ostream& out = std::cout) const;
 	int choice(std::istream& in = std::cin) const;
 	int count(int b) const noexcept;
 	bool empt(int s, int c) const noexcept;
 	void set_b(int b);
 	int full() const noexcept;
-	void del();
-	int* free(int& c) const;
+	void del() noexcept;
+	void free(int& c, int (&mas)[50]) const noexcept;
+	Loto& operator !() noexcept;
+	Loto& operator +=(int num) noexcept;
+	Loto operator +(const Loto& l1);
+	Loto& operator --() noexcept;
+	friend std::ostream& operator <<(std::ostream& s, const Loto& l);
+	Loto& operator --(int d) noexcept;
+	const Cell* operator [](int s) const noexcept{ return &cells[s][0]; };
+	operator int() const noexcept { return a; };
 };
 
 template <class T>
