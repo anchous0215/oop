@@ -1,0 +1,94 @@
+#include "pch.h"
+#include "../lab3c/Header.h"
+#include"../main3/func3.h"
+
+TEST(LotoConstructor, defConstructor) {
+	Loto l;
+	ASSERT_EQ(3, l.get_a());
+	Loto ll[5];
+	for (int i = 0; i < 5; i++) {
+		ASSERT_EQ(3, ll[i].get_a());
+	}
+}
+
+TEST(LotoConstructor, initConstructor) {
+	Loto l(5);
+	ASSERT_EQ(5, l.get_a());
+	Loto ll[5];
+	for (int i = 0; i < 5; i++) {
+		ASSERT_EQ(3, ll[i].get_a());
+	}
+}
+
+TEST(LotoConst, get) {
+	const Loto l;
+	ASSERT_EQ(3, l.get_a());
+	SUCCEED(l.get_cell(1, 1));
+	output("Enter 3");
+	ASSERT_EQ(3, l.choice());
+	SUCCEED(l.count(3));
+	ASSERT_EQ(0, l.empt(1, 1));
+	ASSERT_EQ(0, l.full());
+	SUCCEED(l.free());
+	Cell c;
+	SUCCEED(c = l[2][3]);
+}
+
+TEST(Lotomethods, v) {
+	Loto l;
+
+	ASSERT_EQ(3, l.get_a());
+	ASSERT_EQ(0, l.empt(1, 1));
+	SUCCEED(l.count(3));
+	SUCCEED(l.set_b(3));
+	ASSERT_EQ(0, l.full());
+	SUCCEED(l.del());
+	SUCCEED(l.free());
+	SUCCEED(l.get_cell(1, 1));
+	output("Enter 3");
+	ASSERT_EQ(3, l.choice());
+}
+
+TEST(peregruz, 1) {
+	Loto l;
+	ASSERT_EQ(0, !l);
+	Loto l1;
+	Loto l2 = l1 + l;
+	ASSERT_EQ(6, l2.get_a());
+	int a;
+	a = (int)l;
+	ASSERT_EQ(3, a);
+	Cell c;
+	c.num = 1;
+	c.bo = 0;
+	l[1][0] = c;
+	ASSERT_EQ(l[1][0].bo, 0);
+	ASSERT_EQ(l[1][0].num, 1);
+	SUCCEED(c = l[2][3]);
+	l += 2;
+	ASSERT_EQ(l[1][0].num, 3);
+	l--;
+	ASSERT_EQ(l[1][0].num, 2);
+	--l;
+	ASSERT_EQ(l[1][0].num, 1);
+	out() << l;
+}
+
+TEST(constructors, 2) {
+	Loto l;
+	Loto l1;
+	Loto l2 = l1 + l;
+	ASSERT_EQ(6, l2);
+	l2 = l1;
+	ASSERT_EQ(3, l2);
+	l2 = l1 + l;
+	ASSERT_EQ(6, l2);
+}
+
+TEST(throws, 3) {
+	Loto l;
+	ASSERT_ANY_THROW(Loto(-1));
+	output("Enter -1\n");
+	ASSERT_ANY_THROW(l.choice());
+	ASSERT_ANY_THROW(l.set_b(-1));
+}
