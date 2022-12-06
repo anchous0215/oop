@@ -3,8 +3,8 @@
 
 TEST(constructors, system) {
 	environment_descriptor desc(10, 10);
-	AI ai(desc);
-	security_system sc(desc, ai);
+	AI ai(&desc);
+	security_system sc(&desc, &ai);
 }
 
 TEST(constructors, elems) {
@@ -41,9 +41,9 @@ TEST(constructors, throws) {
 
 TEST(methods, env) {
 	environment_descriptor d(5, 7);
-	d.set_size(4, 6);
-	ASSERT_EQ(4, d.get_size()[0]);
-	ASSERT_EQ(6, d.get_size()[1]);
+	d.set_size(8, 9);
+	ASSERT_EQ(8, d.get_size()[0]);
+	ASSERT_EQ(9, d.get_size()[1]);
 	ASSERT_ANY_THROW(d.set_size(-1, 2));
 	ASSERT_ANY_THROW(d.set_size(1, -2));
 	environment_elem el;
@@ -55,18 +55,45 @@ TEST(methods, env) {
 	d.insert_elem({ 4, 6 }, e);
 	ASSERT_EQ(&e, &d.get_cell({ 4, 6 }));
 	ASSERT_ANY_THROW(d.get_cell({ 1, 1 }));
-	for (int i = 1; i <= d.get_size()[1]; i++) {
-		for (int j = 1; j <= d.get_size()[0]; j++) {
-			cout << d.get_cell_type({j, i}) << " ";
-		}
-		cout << "\n";
-	}
+	cout << d;
 	ASSERT_ANY_THROW(d.insert_elem({1, 3}, el));
 	ASSERT_ANY_THROW(d.insert_elem({ 10, 3}, m));
 	ASSERT_ANY_THROW(d.insert_elem({ 0, -3}, e));
 	ASSERT_ANY_THROW(d.del_elem({ 1, 1 }));
 	d.del_elem({ 1, 3 });
-	ASSERT_EQ(0, d.get_cell_type({ 3, 1 }));
+	ASSERT_EQ(' ', d.get_cell_type({3, 1}));
+}
+
+TEST(methods, AI) {
+	environment_descriptor d;
+	AI ai(&d);
+	static_platform s;
+	mobil_platform m;
+	net_modul n1;
+	net_modul n2;
+	sensor s1;
+	sensor s2;
+	armament a1;
+	armament a2;
+	d.insert_elem({ 5, 5 }, s);
+	d.insert_elem({ 5, 6 }, m);
+	s.insert_modul(n1);
+	s.insert_modul(s1);
+	s.insert_modul(a1);
+	m.insert_modul(n2);
+	m.insert_modul(s2);
+	m.insert_modul(a2);
+	algoritm a;
+	enemy e1(a);
+	enemy e2(a);
+	d.insert_elem({ 5, 3 }, e1);
+	d.insert_elem({ 5, 8 }, e2);
+	ai.kill_enemy();
+	ASSERT_EQ(' ', d.get_cell_type({5, 3}));
+	ASSERT_EQ(' ', d.get_cell_type({5, 8}));
+	cout << d;
+	ai.move_moduls();
+	cout << d;
 }
 
 TEST(methods, env_elem) {
@@ -95,16 +122,11 @@ TEST(methods, scan_elem) {
 	ASSERT_EQ(&d, s.get_desc());
 	ASSERT_EQ(&d, e.get_desc());
 	m.move({ 1, 1 });
-	e.move({ 1, 3 });
 	coord c = { 1, 1 };
 	ASSERT_EQ(c, m.get_coords());
 	c = { 0, 0 };
 	ASSERT_EQ(c, s.get_coords());
-	c = { 1, 3 };
-	ASSERT_EQ(c, e.get_coords());
 	ASSERT_EQ(&m, &d.get_cell({1, 1}));
-	ASSERT_EQ(&e, &d.get_cell({ 1, 3 }));
-	ASSERT_ANY_THROW(m.move({ 1, 1 }));
 	ASSERT_ANY_THROW(m.move({ -1, 2 }));
 	ASSERT_ANY_THROW(m.move({ 1, 20 }));
 }
@@ -112,22 +134,22 @@ TEST(methods, scan_elem) {
 TEST(methods, algo) {
 	algoritm a;
 	environment_descriptor d;
-	coord c = a.algor({ 1, 1 }, d);
+	coord c = a.algor({ 1, 1 }, &d);
 	coord c1 = { 2, 1 };
 	ASSERT_EQ(c1, c);
 	environment_elem e;
 	d.insert_elem({ 3, 1 }, e);
-	c = a.algor(c1, d);
+	c = a.algor(c1, &d);
 	c1 = { 2, 2 };
 	ASSERT_EQ(c1, c);
 	d.insert_elem({ 3, 2 }, e);
 	d.insert_elem({ 2, 3 }, e);
-	c = a.algor(c1, d);
+	c = a.algor(c1, &d);
 	c1 = { 1, 2 };
 	ASSERT_EQ(c1, c);
 	d.insert_elem({ 2, 2 }, e);
 	d.insert_elem({ 1, 3 }, e);
-	c = a.algor(c1, d);
+	c = a.algor(c1, &d);
 	c1 = { 1, 1 };
 	ASSERT_EQ(c1, c);
 }
@@ -138,34 +160,25 @@ TEST(methods, enemy) {
 	enemy e(a);
 	ASSERT_EQ(3, e.get_val());
 	d.insert_elem({ 1, 1 }, e);
-	coord c = e.alg.algor(e.get_coords(), d);
-	e.move(c);
+	e.move();
 	ASSERT_EQ(2, e.get_coords().x);
 	ASSERT_EQ(1, e.get_coords().y);
 	environment_elem el;
 	d.insert_elem({ 3, 1 }, el);
-	c = e.alg.algor(e.get_coords(), d);
-	e.move(c);
+	e.move();
 	ASSERT_EQ(2, e.get_coords().x);
 	ASSERT_EQ(2, e.get_coords().y);
 	d.insert_elem({ 3, 2 }, el);
 	d.insert_elem({ 2, 3 }, el);
-	c = e.alg.algor(e.get_coords(), d);
-	e.move(c);
+	e.move();
 	ASSERT_EQ(1, e.get_coords().x);
 	ASSERT_EQ(2, e.get_coords().y);
 	d.insert_elem({ 2, 2 }, el);
 	d.insert_elem({ 1, 3 }, el);
-	c = e.alg.algor(e.get_coords(), d);
-	e.move(c);
+	e.move();
 	ASSERT_EQ(1, e.get_coords().x);
 	ASSERT_EQ(1, e.get_coords().y);
-	for (int i = 1; i <= d.get_size()[1]; i++) {
-		for (int j = 1; j <= d.get_size()[0]; j++) {
-			cout << d.get_cell_type({ j, i }) << " ";
-		}
-		cout << "\n";
-	}
+	cout << d;
 }
 
 
@@ -223,21 +236,10 @@ TEST(methods, mod_plat) {
 	modul.insert_modul(ar2);
 	enemy en2(al);
 	d.insert_elem({ 7, 10 }, en2);
-	for (int i = 1; i <= d.get_size()[1]; i++) {
-		for (int j = 1; j <= d.get_size()[0]; j++) {
-			cout << d.get_cell_type({ j, i }) << " ";
-		}
-		cout << "\n";
-	}
-	cout << "\n";
+	cout << d;
 	plat.scan_kill();
 	modul.scan_kill();
-	for (int i = 1; i <= d.get_size()[1]; i++) {
-		for (int j = 1; j <= d.get_size()[0]; j++) {
-			cout << d.get_cell_type({ j, i }) << " ";
-		}
-		cout << "\n";
-	}
+	cout << d;
 	modul.less_energy();
 	ASSERT_EQ(3, ar2.get_energy());
 	for (int i = 0; i < 4; i++) {
@@ -252,13 +254,28 @@ TEST(methods, mod_plat) {
 
 TEST(methods, stat_plat) {
 	static_platform s;
-	ASSERT_ANY_THROW(s.move({ 1, 1 }));
 	ASSERT_EQ(1, s.get_plat());
 }
 
 TEST(methods, mob_plat) {
 	mobil_platform m;
+	environment_descriptor d;
+	d.insert_elem({ 5, 5 }, m);
+	algoritm a;
+	enemy e1(a);
+	d.insert_elem({ 7, 5 }, e1);
 	ASSERT_EQ(2, m.get_plat());
+	environment_elem el;
+	d.insert_elem({ 6, 5 }, el);
+	enemy e2(a);
+	d.insert_elem({ 5, 7 }, e2);
+	d.insert_elem({ 5, 6 }, el);
+	enemy e3(a);
+	d.insert_elem({ 3, 5 }, e3);
+	d.insert_elem({ 4, 5 }, el);
+	enemy e4(a);
+	d.insert_elem({ 5, 3 }, e4);
+	d.insert_elem({ 5, 4 }, el);
 }
 
 TEST(methods, modul) {
@@ -420,12 +437,7 @@ TEST(methods, sensor) {
 	m1.insert_modul(s1);
 	v = s1.scan();
 	ASSERT_EQ(6, v.size());
-	for (int i = 1; i <= d.get_size()[1]; i++) {
-		for (int j = 1; j <= d.get_size()[0]; j++) {
-			cout << d.get_cell_type({ j, i }) << " ";
-		}
-		cout << "\n";
-	}
+	cout << d;
 	ASSERT_EQ(2, s.get_type());
 	ASSERT_EQ(2, s1.get_type());
 }
@@ -455,15 +467,164 @@ TEST(methods, armament) {
 	a.energy_on();
 	a.fire(e);
 	ASSERT_EQ(1, a.get_energy_type());
-	ASSERT_EQ(3, d.get_cell_type({1, 1}));
+	ASSERT_EQ('e', d.get_cell_type({1, 1}));
 	a.energy_off();
 	a.fire(e);
-	ASSERT_EQ(0, d.get_cell_type({ 1, 1 }));
-	for (int i = 1; i <= d.get_size()[1]; i++) {
-		for (int j = 1; j <= d.get_size()[0]; j++) {
-			cout << d.get_cell_type({ j, i }) << " ";
-		}
-		cout << "\n";
-	}
+	ASSERT_EQ(' ', d.get_cell_type({1, 1}));
+	cout << d;
 	ASSERT_EQ(3, a.get_type());
+}
+
+TEST(methods, ss) {
+	srand(static_cast<unsigned int>(time(NULL)));
+	environment_descriptor d;
+	AI ai(&d);
+	environment_elem el;
+	int k = 0;
+	while (k < 20) {
+		int x = rand() % 10 + 1;
+		int y = rand() % 10 + 1;
+		if (d.get_cell_type({ x, y }) == ' ') {
+			d.insert_elem({ x, y }, el);
+			k++;
+		}
+	}
+	algoritm al;
+	enemy e1(al);
+	enemy e2(al);
+	enemy e3(al);
+	enemy e4(al);
+	enemy e5(al);
+	while (k != 1) {
+		int x = rand() % 10 + 1;
+		int y = rand() % 10 + 1;
+		if (d.get_cell_type({ x, y }) == ' ') {
+			d.insert_elem({ x, y }, e1);
+			k = 1;
+		}
+	}
+	while (k != 2) {
+		int x = rand() % 10 + 1;
+		int y = rand() % 10 + 1;
+		if (d.get_cell_type({ x, y }) == ' ') {
+			d.insert_elem({ x, y }, e2);
+			k = 2;
+		}
+	}
+	while (k != 3) {
+		int x = rand() % 10 + 1;
+		int y = rand() % 10 + 1;
+		if (d.get_cell_type({ x, y }) == ' ') {
+			d.insert_elem({ x, y }, e3);
+			k = 3;
+		}
+	}
+	while (k != 4) {
+		int x = rand() % 10 + 1;
+		int y = rand() % 10 + 1;
+		if (d.get_cell_type({ x, y }) == ' ') {
+			d.insert_elem({ x, y }, e4);
+			k = 4;
+		}
+	}
+	while (k != 5) {
+		int x = rand() % 10 + 1;
+		int y = rand() % 10 + 1;
+		if (d.get_cell_type({ x, y }) == ' ') {
+			d.insert_elem({ x, y }, e5);
+			k = 5;
+		}
+	}
+	static_platform st1;
+	static_platform st2;
+	static_platform st3;
+	mobil_platform m1;
+	mobil_platform m2;
+	mobil_platform m3;
+	while (k != 1) {
+		int x = rand() % 10 + 1;
+		int y = rand() % 10 + 1;
+		if (d.get_cell_type({ x, y }) == ' ') {
+			d.insert_elem({ x, y }, st1);
+			k = 1;
+		}
+	}
+	while (k != 2) {
+		int x = rand() % 10 + 1;
+		int y = rand() % 10 + 1;
+		if (d.get_cell_type({ x, y }) == ' ') {
+			d.insert_elem({ x, y }, st2);
+			k = 2;
+		}
+	}
+	while (k != 3) {
+		int x = rand() % 10 + 1;
+		int y = rand() % 10 + 1;
+		if (d.get_cell_type({ x, y }) == ' ') {
+			d.insert_elem({ x, y }, st3);
+			k = 3;
+		}
+	}
+	net_modul n11;
+	sensor s11;
+	armament a11;
+	st1.insert_modul(n11);
+	st1.insert_modul(s11);
+	st1.insert_modul(a11);
+	net_modul n12;
+	sensor s12;
+	armament a12;
+	st2.insert_modul(n12);
+	st2.insert_modul(s12);
+	st2.insert_modul(a12);
+	net_modul n13;
+	sensor s13;
+	armament a13;
+	st3.insert_modul(n13);
+	st3.insert_modul(s13);
+	st3.insert_modul(a13);
+	while (k != 1) {
+		int x = rand() % 10 + 1;
+		int y = rand() % 10 + 1;
+		if (d.get_cell_type({ x, y }) == ' ') {
+			d.insert_elem({ x, y }, m1);
+			k = 1;
+		}
+	}
+	while (k != 2) {
+		int x = rand() % 10 + 1;
+		int y = rand() % 10 + 1;
+		if (d.get_cell_type({ x, y }) == ' ') {
+			d.insert_elem({ x, y }, m2);
+			k = 2;
+		}
+	}
+	while (k != 3) {
+		int x = rand() % 10 + 1;
+		int y = rand() % 10 + 1;
+		if (d.get_cell_type({ x, y }) == ' ') {
+			d.insert_elem({ x, y }, m3);
+			k = 3;
+		}
+	}
+	net_modul n21;
+	sensor s21;
+	armament a21;
+	m1.insert_modul(n21);
+	m1.insert_modul(s21);
+	m1.insert_modul(a21);
+	net_modul n22;
+	sensor s22;
+	armament a22;
+	m2.insert_modul(n22);
+	m2.insert_modul(s22);
+	m2.insert_modul(a22);
+	net_modul n23;
+	sensor s23;
+	armament a23;
+	m3.insert_modul(n23);
+	m3.insert_modul(s23);
+	m3.insert_modul(a23);
+	security_system ss(&d, &ai);
+	ss.work();
 }
