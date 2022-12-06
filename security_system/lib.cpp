@@ -35,13 +35,27 @@ environment_elem& environment_descriptor::get_cell(struct coord coords) const {
 	}
 }
 
-int environment_descriptor::get_cell_type(coord c) const noexcept {
+char environment_descriptor::get_cell_type(coord c) const noexcept {
 	if (elements.count(c) == 0) {
-		return 0;
+		return ' ';
 	}
 	else {
 		environment_elem& el = elements.at(c);
-		return elements.at(c).get_val();
+		if(elements.at(c).get_val() == 1){
+			return '-';
+		}
+		if (elements.at(c).get_val() == 2) {
+			modul_platform* p = static_cast <modul_platform*>(&elements.at(c));
+			if (p->get_plat() == 1) {
+				return 's';
+			}
+			else {
+				return 'm';
+			}
+		}
+		if (elements.at(c).get_val() == 3) {
+			return 'e';
+		}
 	}
 }
 
@@ -58,7 +72,7 @@ elements.insert(pair <coord, environment_elem&>(coords, elem));
 }
 
 void environment_descriptor::del_elem(struct coord c) {
-	if (get_cell_type(c) == 0) {
+	if (get_cell_type(c) == ' ') {
 		throw exception("This cell is empty");
 	}
 	else {
@@ -68,31 +82,137 @@ void environment_descriptor::del_elem(struct coord c) {
 
 
 //AI
-AI::AI(environment_descriptor& desc) noexcept:
+AI::AI(environment_descriptor* desc) noexcept:
 desc(desc) {};
 
-void AI::destroy_all_enemy(class environment_descriptor& descriptor) {
+void AI::destroy_all_enemy() {
 	kill_enemy();
-	//move_moduls();
+	move_moduls();
 }
 
 void AI::kill_enemy() {
-	for (int i = 1; i <= desc.get_size()[1]; i++) {
-		for (int j = 1; j <= desc.get_size()[0]; j++) {
-			if (desc.get_cell_type({ j, i }) == 2) {
-				modul_platform* plat = static_cast <modul_platform*>(&(desc.get_cell({ i, j })));
+	for (int i = 1; i <= desc->get_size()[1]; i++) {
+		for (int j = 1; j <= desc->get_size()[0]; j++) {
+			if ((desc->get_cell_type({ j, i }) == 's') || (desc->get_cell_type({ j, i }) == 'm')) {
+				modul_platform* plat = static_cast <modul_platform*>(&(desc->get_cell({ j, i })));
 				plat->scan_kill();
 			}
 		}
-		cout << "\n";
+	}
+}
+
+void AI::move_moduls() noexcept {
+	vector <mobil_platform*> v;
+	for (int i = 1; i <= desc->get_size()[0]; i++) {
+		for (int j = 1; j <= desc->get_size()[1]; j++) {
+			if (desc->get_cell_type({ i, j }) == 'm') {
+				mobil_platform* mob = static_cast <mobil_platform*>(&(desc->get_cell({ i, j })));
+				if (find(v.begin(), v.end(), mob) == v.end()) {
+					v.push_back(mob);
+					coord c = move_in(*mob);
+					mob->move(c);
+				}
+				
+			}
+		}
+	}
+}
+
+coord AI::move_in(mobil_platform& m) noexcept {
+	int x = m.get_coords().x;
+	int y = m.get_coords().y;
+	int k = 1;
+	coord c1 = { x + 1, y };
+	coord c2 = { x, y + 1 };
+	coord c3 = { x - 1, y };
+	coord c4 = { x, y - 1 };
+	while ((k < desc->get_size()[0]) || (k < desc->get_size()[1])) {
+		for (int i = x - k; i <= x + k; i++) {
+			for (int j = y - k; j <= y + k; j++) {
+				if ((insize({ i, j }, *desc)) && (desc->get_cell_type({ i, j }) == 'e')) {
+					if ((i > x) && (desc->get_cell_type({ x + 1, y }) == ' ') && (m.get_prev() != c1)) {
+						m.get_prev() = m.get_coords();
+						return{ x + 1, y };
+					}
+					else if ((j > y) && (desc->get_cell_type({ x, y + 1 }) == ' ') && (m.get_prev() != c2)) {
+						m.get_prev() = m.get_coords();
+						return{ x, y + 1 };
+					}
+					else if ((i < x) && (desc->get_cell_type({ x - 1, y }) == ' ') && (m.get_prev() != c3)) {
+						m.get_prev() = m.get_coords();
+						return{ x - 1, y };
+					}
+					else if ((j < y) && (desc->get_cell_type({ x, y - 1 }) == ' ') && (m.get_prev() != c4)) {
+						m.get_prev() = m.get_coords();
+						return{ x, y - 1 };
+					}
+				}
+			}
+		}
+		k++;
+	}
+	if ((x + 1 != desc->get_size()[0] + 1) && (desc->get_cell_type({ x + 1, y }) == ' ') && (m.get_prev() != c1)) {
+		m.get_prev() = m.get_coords();
+		return{ x + 1, y };
+	}
+	else if ((y + 1 != desc->get_size()[1] + 1) && (desc->get_cell_type({ x, y + 1 }) == ' ') && (m.get_prev() != c2)) {
+		m.get_prev() = m.get_coords();
+		return{ x, y + 1 };
+	}
+	else if ((x - 1 != 0) && (desc->get_cell_type({ x - 1, y }) == ' ') && (m.get_prev() != c3)) {
+		m.get_prev() = m.get_coords();
+		return{ x - 1, y };
+	}
+	else if ((y - 1 != 0) && (desc->get_cell_type({ x, y - 1 }) == ' ') && (m.get_prev() != c4)) {
+		m.get_prev() = m.get_coords();
+		return{ x, y - 1 };
+	}
+	else {
+		return { x, y };
 	}
 }
 
 
 
 //security_system
-security_system::security_system(environment_descriptor& desc, AI& ai) noexcept:
-	descriptor(desc), ai(ai) {}; 
+security_system::security_system(environment_descriptor* desc, AI* ai) noexcept:
+	descriptor(desc), ai(ai) {};
+
+void security_system::work() noexcept {
+	while (check()) {
+		cout << *descriptor;
+		ai->destroy_all_enemy();
+		cout << *descriptor;
+		move_enemy();
+	}
+}
+
+void security_system::move_enemy() noexcept {
+	vector <enemy*> v;
+	for (int i = 1; i <= descriptor->get_size()[0]; i++) {
+		for (int j = 1; j <= descriptor->get_size()[1]; j++) {
+			if (descriptor->get_cell_type({ i, j }) == 'e') {
+				enemy* e = static_cast <enemy*>(&(descriptor->get_cell({ i, j })));
+				if (find(v.begin(), v.end(), e) == v.end()) {
+					v.push_back(e);
+					algoritm a;
+					e->move();
+				}
+			}
+		}
+	}
+}
+
+int security_system::check() noexcept {
+	for (int i = 1; i <= descriptor->get_size()[0]; i++) {
+		for (int j = 1; j <= descriptor->get_size()[1]; j++) {
+			if (descriptor->get_cell_type({ i, j }) == 'e') {
+				return 1;
+			}
+		}
+	}
+	return 0;
+}
 
 
 
@@ -116,6 +236,15 @@ bool coord:: operator <(const coord& a) const {
 
 bool coord:: operator ==(const coord& a) const {
 	if ((x == a.x) && (y == a.y)) {
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+bool coord:: operator !=(const coord& a) const {
+	if ((x != a.x) || (y != a.y)) {
 		return true;
 	}
 	else {
@@ -155,10 +284,13 @@ void scan_elem::set_desc(environment_descriptor& d) noexcept {
 }
 
 void scan_elem:: move(coord c) {
+	if (c == get_coords()) {
+		return;
+	}
 	if (!insize(c, *desc)) {
 		throw exception("this place is not excist\n");
 	}
-	if (desc->elements.count(c) > 0) {
+	if (desc->get_cell_type(c) != ' ') {
 		throw exception("this place is busy\n");
 	}
 	desc->elements.insert(pair <coord, environment_elem&>(c, *this));
@@ -170,17 +302,17 @@ void scan_elem:: move(coord c) {
 
 
 //algoritm
-coord algoritm::algor(coord c, environment_descriptor& d) noexcept {
-	if ((c.x + 1 != d.get_size()[0]) && (d.get_cell_type({ c.x + 1, c.y }) == 0)) {
+coord algoritm::algor(coord c, environment_descriptor* d) noexcept {
+	if ((c.x + 1 != d->get_size()[0]+1) && (d->get_cell_type({ c.x + 1, c.y }) == ' ')) {
 		return{ c.x + 1, c.y };
 	}
-	else if ((c.y + 1 != d.get_size()[1]) && (d.get_cell_type({ c.x, c.y + 1 }) == 0)) {
+	else if ((c.y + 1 != d->get_size()[1]+1) && (d->get_cell_type({ c.x, c.y + 1 }) == ' ')) {
 		return{ c.x, c.y + 1};
 	}
-	else if ((c.x - 1 != 0) && (d.get_cell_type({ c.x - 1, c.y }) == 0)) {
+	else if ((c.x - 1 != 0) && (d->get_cell_type({ c.x - 1, c.y }) == ' ')) {
 		return{ c.x - 1, c.y};
 	}
-	else if ((c.y - 1 != 0) && (d.get_cell_type({ c.x, c.y - 1 }) == 0)) {
+	else if ((c.y - 1 != 0) && (d->get_cell_type({ c.x, c.y - 1 }) == ' ')) {
 		return{ c.x, c.y - 1 };
 	}
 	else {
@@ -193,6 +325,12 @@ coord algoritm::algor(coord c, environment_descriptor& d) noexcept {
 //enemy
 enemy::enemy(algoritm& al) noexcept {
 	alg = al;
+}
+
+
+void enemy::move() noexcept {
+	coord c = alg.algor(get_coords(), desc);
+	scan_elem::move(c);
 }
 
 int enemy::get_val() const noexcept {
@@ -323,10 +461,6 @@ static_platform::static_platform(int energy, string str, int slots) : modul_plat
 	energy_supply = energy;
 }
 
-void static_platform::move(struct coord c) {
-	throw exception("This is static platform");
-}
-
 int static_platform::get_plat() const noexcept {
 	return 1;
 }
@@ -339,6 +473,10 @@ mobil_platform::mobil_platform(int sp, string str, int slots) : modul_platform(s
 		throw exception("invalid speed\n");
 	}
 	speed = sp;
+}
+
+coord mobil_platform::get_prev() const noexcept {
+	return prev_c;
 }
 
 int mobil_platform::get_plat() const noexcept {
@@ -423,7 +561,7 @@ vector <environment_elem*> coord_modul::scan() const {
 	for (int i = plat->get_coords().x - radius; i <= plat->get_coords().x + radius; i++) {
 		for (int j = plat->get_coords().y - radius; j <= plat->get_coords().y + radius; j++) {
 			coord c = { i, j };
-			if (insize(c, *plat->get_desc()) && (plat->get_desc()->get_cell_type(c) != 0) && ( !(plat->get_coords() == c) )) {
+			if (insize(c, *plat->get_desc()) && (plat->get_desc()->get_cell_type(c) != ' ') && (!(plat->get_coords() == c))) {
 				e.push_back(&(plat->get_desc()->get_cell({ i, j })));
 			}
 		}
@@ -622,61 +760,61 @@ int sensor::get_type() const noexcept {
 		int x = plat->get_coords().x;
 		int y = plat->get_coords().y;
 		for(int i = plat->get_coords().y - 1; i >= plat->get_coords().y - radius + 1; i--){
-			if ((insize({x, i}, *plat->get_desc())) && (plat->get_desc()->get_cell_type({x, i}) == 0) && (insize({ x, i - 1 }, *plat->get_desc())) && (plat->get_desc()->get_cell_type({x, i - 1}) != 0)) {
+			if ((insize({x, i}, *plat->get_desc())) && (plat->get_desc()->get_cell_type({x, i}) == ' ') && (insize({x, i - 1}, *plat->get_desc())) && (plat->get_desc()->get_cell_type({x, i - 1}) != ' ')) {
 				e.push_back(&plat->get_desc()->get_cell({ x, i - 1 }));
 			}
 		}
 		for (int i = plat->get_coords().y + 1; i <= plat->get_coords().y + radius - 1; i++) {
-			if ((insize({ x, i }, *plat->get_desc())) && (plat->get_desc()->get_cell_type({ x, i }) == 0) && (insize({ x, i + 1 }, *plat->get_desc())) && (plat->get_desc()->get_cell_type({ x, i + 1 }) != 0)) {
+			if ((insize({ x, i }, *plat->get_desc())) && (plat->get_desc()->get_cell_type({ x, i }) == ' ') && (insize({x, i + 1}, *plat->get_desc())) && (plat->get_desc()->get_cell_type({x, i + 1}) != ' ')) {
 				e.push_back(&plat->get_desc()->get_cell({ x, i + 1 }));
 			}
 		}
 		for (int i = plat->get_coords().x - 1; i >= plat->get_coords().x - radius + 1; i--) {
-			if ((insize({ i, y }, *plat->get_desc())) && (plat->get_desc()->get_cell_type({ i, y }) == 0) && (insize({ i - 1, y }, *plat->get_desc())) && (plat->get_desc()->get_cell_type({ i - 1, y }) != 0)) {
+			if ((insize({ i, y }, *plat->get_desc())) && (plat->get_desc()->get_cell_type({ i, y }) == ' ') && (insize({i - 1, y}, *plat->get_desc())) && (plat->get_desc()->get_cell_type({i - 1, y}) != ' ')) {
 				e.push_back(&plat->get_desc()->get_cell({ i - 1, x }));
 			}
 		}
 		for (int i = plat->get_coords().x + 1; i <= plat->get_coords().x + radius - 1; i++) {
-			if ((insize({ i, y }, *plat->get_desc())) && (plat->get_desc()->get_cell_type({ i, y }) == 0) && (insize({ i + 1, y }, *plat->get_desc())) && (plat->get_desc()->get_cell_type({ i + 1, y }) != 0)) {
+			if ((insize({ i, y }, *plat->get_desc())) && (plat->get_desc()->get_cell_type({ i, y }) == ' ') && (insize({i + 1, y}, *plat->get_desc())) && (plat->get_desc()->get_cell_type({i + 1, y}) != ' ')) {
 				e.push_back(&plat->get_desc()->get_cell({ i + 1, y }));
 			}
 		}
-		if ((insize({ x, y - 1 }, *plat->get_desc())) && (plat->get_desc()->get_cell_type({ x, y - 1 }) != 0)) {
+		if ((insize({ x, y - 1 }, *plat->get_desc())) && (plat->get_desc()->get_cell_type({ x, y - 1 }) != ' ')) {
 			e.push_back(&plat->get_desc()->get_cell({ x, y - 1 }));
 		}
-		if ((insize({ x, y + 1 }, *plat->get_desc())) && (plat->get_desc()->get_cell_type({ x, y + 1 }) != 0)) {
+		if ((insize({ x, y + 1 }, *plat->get_desc())) && (plat->get_desc()->get_cell_type({ x, y + 1 }) != ' ')) {
 			e.push_back(&plat->get_desc()->get_cell({ x, y + 1 }));
 		}
-		if ((insize({ x - 1, y }, *plat->get_desc())) && (plat->get_desc()->get_cell_type({ x - 1, y }) != 0)) {
+		if ((insize({ x - 1, y }, *plat->get_desc())) && (plat->get_desc()->get_cell_type({ x - 1, y }) != ' ')) {
 			e.push_back(&plat->get_desc()->get_cell({ x - 1, y }));
 		}
-		if ((insize({ x + 1, y }, *plat->get_desc())) && (plat->get_desc()->get_cell_type({ x + 1, y }) != 0)) {
+		if ((insize({ x + 1, y }, *plat->get_desc())) && (plat->get_desc()->get_cell_type({ x + 1, y }) != ' ')) {
 			e.push_back(&plat->get_desc()->get_cell({ x + 1, y }));
 		}
 		for (int i = plat->get_coords().x - 1, k = 0; i >= plat->get_coords().x - radius; i--, k++) {
 			for (int j = plat->get_coords().y - 1; j >= plat->get_coords().y - radius; j--) {
-				if ((insize({ i, j }, *plat->get_desc())) && ((plat->get_desc()->get_cell_type({ x - k, j }) == 0) || ((plat->get_desc()->get_cell_type({ i, y - k }) == 0))) && (plat->get_desc()->get_cell_type({ i, j }) != 0)) {
+				if ((insize({ i, j }, *plat->get_desc())) && ((plat->get_desc()->get_cell_type({ x - k, j }) == ' ') || ((plat->get_desc()->get_cell_type({i, y - k}) == ' '))) && (plat->get_desc()->get_cell_type({i, j}) != ' ')) {
 					e.push_back(&plat->get_desc()->get_cell({ i, j }));
 				}
 			}
 		}
 		for (int i = plat->get_coords().x + 1, k = 0; i <= plat->get_coords().x + radius; i++, k++) {
 			for (int j = plat->get_coords().y - 1; j >= plat->get_coords().y - radius; j--) {
-				if ((insize({ i, j }, *plat->get_desc())) && ((plat->get_desc()->get_cell_type({ x + k, j }) == 0) || ((plat->get_desc()->get_cell_type({ i, y - k }) == 0))) && (plat->get_desc()->get_cell_type({ i, j }) != 0)) {
+				if ((insize({ i, j }, *plat->get_desc())) && ((plat->get_desc()->get_cell_type({ x + k, j }) == ' ') || ((plat->get_desc()->get_cell_type({i, y - k}) == ' '))) && (plat->get_desc()->get_cell_type({i, j}) != ' ')) {
 					e.push_back(&plat->get_desc()->get_cell({ i, j }));
 				}
 			}
 		}
 		for (int i = plat->get_coords().x + 1, k = 0; i <= plat->get_coords().x + radius; i++, k++) {
 			for (int j = plat->get_coords().y + 1; j <= plat->get_coords().y + radius; j++) {
-				if ((insize({ i, j }, *plat->get_desc())) && ((plat->get_desc()->get_cell_type({ x + k, j }) == 0) || ((plat->get_desc()->get_cell_type({ i, y + k }) == 0))) && (plat->get_desc()->get_cell_type({ i, j }) != 0)) {
+				if ((insize({ i, j }, *plat->get_desc())) && ((plat->get_desc()->get_cell_type({ x + k, j }) == ' ') || ((plat->get_desc()->get_cell_type({i, y + k}) == ' '))) && (plat->get_desc()->get_cell_type({i, j}) != ' ')) {
 					e.push_back(&plat->get_desc()->get_cell({ i, j }));
 				}
 			}
 		}
 		for (int i = plat->get_coords().x - 1, k = 0; i >= plat->get_coords().x - radius; i--, k++) {
 			for (int j = plat->get_coords().y + 1; j <= plat->get_coords().y + radius; j++) {
-				if ((insize({ i, j }, *plat->get_desc())) && ((plat->get_desc()->get_cell_type({ x - k, j }) == 0) || ((plat->get_desc()->get_cell_type({ i, y + k }) == 0))) && (plat->get_desc()->get_cell_type({ i, j }) != 0)) {
+				if ((insize({ i, j }, *plat->get_desc())) && ((plat->get_desc()->get_cell_type({ x - k, j }) == ' ') || ((plat->get_desc()->get_cell_type({i, y + k}) == ' '))) && (plat->get_desc()->get_cell_type({i, j}) != ' ')) {
 					e.push_back(&plat->get_desc()->get_cell({ i, j }));
 				}
 			}
@@ -762,6 +900,18 @@ int armament::get_type() const noexcept {
 
 
 //other
+ostream& operator <<(ostream& out, const environment_descriptor& e) {
+	for (int i = 1; i <= e.get_size()[1]; i++) {
+		for (int j = 1; j <= e.get_size()[0]; j++) {
+			out << e.get_cell_type({ j, i }) << " ";
+		}
+		out << "\n";
+	}
+	out << "--------------------";
+	out << "\n";
+	return out;
+}
+
 bool insize(coord c, environment_descriptor d) {
 	if ((c.x > 0) && (c.y > 0) && (c.x <= d.get_size()[0]) && (c.y <= d.get_size()[1])) {
 		return true;
