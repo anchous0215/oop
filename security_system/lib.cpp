@@ -26,12 +26,12 @@ void environment_descriptor::set_size(int m, int h) {
 	high = h;
 }
 
-environment_elem& environment_descriptor::get_cell(struct coord coords) const {
+environment_elem* environment_descriptor::get_cell(struct coord coords) const {
 	if (elements.count(coords) == 0) {
 		throw exception("This cell empty");
 	}
 	else {
-		return elements.at(coords);
+		return &elements.at(coords);
 	}
 }
 
@@ -94,7 +94,7 @@ void AI::kill_enemy() {
 	for (int i = 1; i <= desc->get_size()[1]; i++) {
 		for (int j = 1; j <= desc->get_size()[0]; j++) {
 			if ((desc->get_cell_type({ j, i }) == 's') || (desc->get_cell_type({ j, i }) == 'm')) {
-				modul_platform* plat = static_cast <modul_platform*>(&(desc->get_cell({ j, i })));
+			modul_platform* plat = static_cast <modul_platform*>(desc->get_cell({ j, i }));
 				plat->scan_kill();
 			}
 		}
@@ -102,11 +102,11 @@ void AI::kill_enemy() {
 }
 
 void AI::move_moduls() noexcept {
-	vector <mobil_platform*> v;
+	Vector <mobil_platform*> v;
 	for (int i = 1; i <= desc->get_size()[0]; i++) {
 		for (int j = 1; j <= desc->get_size()[1]; j++) {
 			if (desc->get_cell_type({ i, j }) == 'm') {
-				mobil_platform* mob = static_cast <mobil_platform*>(&(desc->get_cell({ i, j })));
+				mobil_platform* mob = static_cast <mobil_platform*>(desc->get_cell({ i, j }));
 				if (find(v.begin(), v.end(), mob) == v.end()) {
 					v.push_back(mob);
 					coord c = move_in(*mob);
@@ -131,19 +131,19 @@ coord AI::move_in(mobil_platform& m) noexcept {
 			for (int j = y - k; j <= y + k; j++) {
 				if ((insize({ i, j }, *desc)) && (desc->get_cell_type({ i, j }) == 'e')) {
 					if ((i > x) && (desc->get_cell_type({ x + 1, y }) == ' ') && (m.get_prev() != c1)) {
-						m.get_prev() = m.get_coords();
+						m.set_coord(m.get_coords());
 						return{ x + 1, y };
 					}
 					else if ((j > y) && (desc->get_cell_type({ x, y + 1 }) == ' ') && (m.get_prev() != c2)) {
-						m.get_prev() = m.get_coords();
+						m.set_coord(m.get_coords());
 						return{ x, y + 1 };
 					}
 					else if ((i < x) && (desc->get_cell_type({ x - 1, y }) == ' ') && (m.get_prev() != c3)) {
-						m.get_prev() = m.get_coords();
+						m.set_coord(m.get_coords());
 						return{ x - 1, y };
 					}
 					else if ((j < y) && (desc->get_cell_type({ x, y - 1 }) == ' ') && (m.get_prev() != c4)) {
-						m.get_prev() = m.get_coords();
+						m.set_coord(m.get_coords());
 						return{ x, y - 1 };
 					}
 				}
@@ -152,19 +152,19 @@ coord AI::move_in(mobil_platform& m) noexcept {
 		k++;
 	}
 	if ((x + 1 != desc->get_size()[0] + 1) && (desc->get_cell_type({ x + 1, y }) == ' ') && (m.get_prev() != c1)) {
-		m.get_prev() = m.get_coords();
+		m.set_coord(m.get_coords());
 		return{ x + 1, y };
 	}
 	else if ((y + 1 != desc->get_size()[1] + 1) && (desc->get_cell_type({ x, y + 1 }) == ' ') && (m.get_prev() != c2)) {
-		m.get_prev() = m.get_coords();
+		m.set_coord(m.get_coords());
 		return{ x, y + 1 };
 	}
 	else if ((x - 1 != 0) && (desc->get_cell_type({ x - 1, y }) == ' ') && (m.get_prev() != c3)) {
-		m.get_prev() = m.get_coords();
+		m.set_coord(m.get_coords());
 		return{ x - 1, y };
 	}
 	else if ((y - 1 != 0) && (desc->get_cell_type({ x, y - 1 }) == ' ') && (m.get_prev() != c4)) {
-		m.get_prev() = m.get_coords();
+		m.set_coord(m.get_coords());
 		return{ x, y - 1 };
 	}
 	else {
@@ -188,14 +188,13 @@ void security_system::work() noexcept {
 }
 
 void security_system::move_enemy() noexcept {
-	vector <enemy*> v;
+	Vector <enemy*> v;
 	for (int i = 1; i <= descriptor->get_size()[0]; i++) {
 		for (int j = 1; j <= descriptor->get_size()[1]; j++) {
 			if (descriptor->get_cell_type({ i, j }) == 'e') {
-				enemy* e = static_cast <enemy*>(&(descriptor->get_cell({ i, j })));
+				enemy* e = static_cast <enemy*>(descriptor->get_cell({ i, j }));
 				if (find(v.begin(), v.end(), e) == v.end()) {
 					v.push_back(e);
-					algoritm a;
 					e->move();
 				}
 			}
@@ -244,12 +243,20 @@ bool coord:: operator ==(const coord& a) const {
 }
 
 bool coord:: operator !=(const coord& a) const {
-	if ((x != a.x) || (y != a.y)) {
+	if ((x != a.x) && (y != a.y)) {
 		return true;
 	}
 	else {
 		return false;
 	}
+}
+
+coord& coord::operator=(const coord& other) {
+	if (this != &other) {
+		x = other.x;
+		y = other.y;
+	}
+	return *this;
 }
 
 
@@ -348,7 +355,7 @@ modul_platform::modul_platform(string str, int slots) {
 	empty_slots = slots;
 }
 
-vector <modul*> modul_platform::get_moduls() const noexcept {
+Vector <modul*>& modul_platform::get_moduls() noexcept {
 	return moduls;
 }
 
@@ -358,6 +365,10 @@ void modul_platform::insert_modul(modul& m) {
 	}
 	int supply = 0;
 	int consum = 0;
+	if (get_plat() == 1) {
+		static_platform* st = static_cast <static_platform*>(this);
+		supply += st->get_supply();
+	}
 	for (int i = 0; i < moduls.size(); i++) {
 		consum += moduls[i]->get_consum();
 		if (moduls[i]->get_type() == 1) {
@@ -388,9 +399,9 @@ void modul_platform::del_modul(modul& m) noexcept{
 }
 
 void modul_platform::scan_kill() noexcept {
-	vector <enemy*> en;
+	Vector <enemy*> en;
 	for (int i = 0; i < moduls.size(); i++) {
-		vector <environment_elem*> elems;
+		Vector <environment_elem*> elems;
 		if (moduls[i]->get_type() == 2) {
 			sensor* s = static_cast <sensor*>(moduls[i]);
 			elems = s->scan();
@@ -553,8 +564,8 @@ void coord_modul::unset_platform() noexcept {
 	plat = nullptr;
 }
 
-vector <environment_elem*> coord_modul::scan() const {
-	vector <environment_elem*> e;
+Vector <environment_elem*> coord_modul::scan() const {
+	Vector <environment_elem*> e;
 	if (plat->get_desc() == nullptr) {
 		throw exception("This platform doesn't have environment descriptor");
 	}
@@ -562,7 +573,7 @@ vector <environment_elem*> coord_modul::scan() const {
 		for (int j = plat->get_coords().y - radius; j <= plat->get_coords().y + radius; j++) {
 			coord c = { i, j };
 			if (insize(c, *plat->get_desc()) && (plat->get_desc()->get_cell_type(c) != ' ') && (!(plat->get_coords() == c))) {
-				e.push_back(&(plat->get_desc()->get_cell({ i, j })));
+				e.push_back(plat->get_desc()->get_cell({ i, j }));
 			}
 		}
 	}
@@ -593,7 +604,7 @@ void net_modul::set_platform(modul_platform& p) {
 		stat_plat = static_cast<static_platform*>(&p);
 	}
 	else {
-		vector <environment_elem*> e = scan();
+		Vector <environment_elem*> e = scan();
 		for (int i = 0; i < e.size(); i++) {
 			int type = e[i]->get_val();
 			if (type == 2) {
@@ -607,7 +618,7 @@ void net_modul::set_platform(modul_platform& p) {
 		}
 	}
 	if (stat_plat == nullptr) {
-		vector <net_modul*> mods = update();
+		Vector <net_modul*> mods = update();
 		for (int i = 0; i < mods.size(); i++) {
 			if (set_conect(*mods[i])) {
 				stat_plat = mods[0]->get_stat_plat();
@@ -616,7 +627,7 @@ void net_modul::set_platform(modul_platform& p) {
 		}
 	}
 	if (stat_plat == nullptr) {
-		vector <net_modul*>	mods = get_neib_par();
+		Vector <net_modul*>	mods = get_neib_par();
 		for (int i = 0; i < mods.size(); i++) {
 			if (set_conect(*mods[i])) {
 				stat_plat = mods[0]->get_stat_plat();
@@ -639,13 +650,13 @@ static_platform* net_modul::get_stat_plat() const noexcept {
 	return stat_plat;
 }
 
-vector <net_modul*> net_modul::update() const noexcept {
-	vector <net_modul*> mods;
-	vector <environment_elem*> e = scan();
+Vector <net_modul*> net_modul::update() const noexcept {
+	Vector <net_modul*> mods;
+	Vector <environment_elem*> e = scan();
 	for (int i = 0; i < e.size(); i++) {
 		if (e[i]->get_val() == 2) {
 			modul_platform* plat = static_cast<modul_platform*>(e[i]);
-			vector <modul*> m = plat->get_moduls();
+			Vector <modul*> m = plat->get_moduls();
 			for (int j = 0; j < m.size(); j++) {
 				if ((m[j]->get_type() == 1) && (this != m[j])) {
 					net_modul* mod = static_cast<net_modul*>(m[j]);
@@ -657,11 +668,11 @@ vector <net_modul*> net_modul::update() const noexcept {
 	return mods;
 }
 
-vector <net_modul*> net_modul::get_neib_par() {
-	vector <net_modul*> neibours;
-	vector <net_modul*> mods = update();
+Vector <net_modul*> net_modul::get_neib_par() {
+	Vector <net_modul*> neibours;
+	Vector <net_modul*> mods = update();
 	for (int i = 0; i < mods.size(); i++) {
-		vector <net_modul*> neibs = mods[i]->update();
+		Vector <net_modul*> neibs = mods[i]->update();
 		for (int j = 0; j < neibs.size(); j++) {
 			if (this != neibs[j]) {
 				neibours.push_back(neibs[j]);
@@ -672,8 +683,9 @@ vector <net_modul*> net_modul::get_neib_par() {
 }
 
 bool net_modul::set_conect(net_modul& m) noexcept {
-	vector <net_modul*> mod = update();
-	vector <net_modul*> neib = get_neib_par();
+	Vector <net_modul*> mod = update();
+	Vector <net_modul*> neib = get_neib_par();
+
 	if (find(nets.begin(), nets.end(), &m) != nets.end()) {
 		return true;
 	}
@@ -710,17 +722,21 @@ bool net_modul::conection(net_modul* mod, int count) {
 
 
 void net_modul::unset_conect(class net_modul& m) noexcept {
-	vector <net_modul*> mod = update();
-	vector <net_modul*> neib = get_neib_par();
+	Vector <net_modul*> mod = update();
+	Vector <net_modul*> neib = get_neib_par();
 	if (find(mod.begin(), mod.end(), &m) != mod.end()) {
 		m.unconection(this, 1);
-		remove(nets.begin(), nets.end(), &m);
+		auto it = find(nets.begin(), nets.end(), &m);
+		nets.erase(it);
 		connect -= 1;
 	}
 	if (find(neib.begin(), neib.end(), &m) != neib.end()) {
 		m.unconection(this, 2);
-		remove(nets.begin(), nets.end(), &m);
-		connect -= 2;
+		if (find(nets.begin(), nets.end(), &m) != nets.end()) {
+			auto it = find(nets.begin(), nets.end(), &m);
+			nets.erase(it);
+			connect -= 2;
+		}
 	}
 }
 
@@ -729,8 +745,11 @@ void net_modul::unconection(class net_modul* m, int count) {
 		throw exception("Incorrect count of connect");
 	}
 	else {
-		remove(nets.begin(), nets.end(), m);
-		connect -= count;
+		if (find(nets.begin(), nets.end(), m) != nets.end()) {
+			auto it = find(nets.begin(), nets.end(), m);
+			nets.erase(it);
+			connect -= count;
+		}
 	}
 }
 
@@ -748,8 +767,8 @@ sensor::sensor(bool t, int cons, bool turn, int slots, int r) : coord_modul(cons
 int sensor::get_type() const noexcept {
 	return 2;
 
-}vector <environment_elem*> sensor::scan() const {
-	vector <environment_elem*> e;
+}Vector <environment_elem*> sensor::scan() const {
+	Vector <environment_elem*> e;
 	if (type == 1) {
 		e = coord_modul::scan();
 	}
@@ -761,61 +780,61 @@ int sensor::get_type() const noexcept {
 		int y = plat->get_coords().y;
 		for(int i = plat->get_coords().y - 1; i >= plat->get_coords().y - radius + 1; i--){
 			if ((insize({x, i}, *plat->get_desc())) && (plat->get_desc()->get_cell_type({x, i}) == ' ') && (insize({x, i - 1}, *plat->get_desc())) && (plat->get_desc()->get_cell_type({x, i - 1}) != ' ')) {
-				e.push_back(&plat->get_desc()->get_cell({ x, i - 1 }));
+				e.push_back(plat->get_desc()->get_cell({ x, i - 1 }));
 			}
 		}
 		for (int i = plat->get_coords().y + 1; i <= plat->get_coords().y + radius - 1; i++) {
 			if ((insize({ x, i }, *plat->get_desc())) && (plat->get_desc()->get_cell_type({ x, i }) == ' ') && (insize({x, i + 1}, *plat->get_desc())) && (plat->get_desc()->get_cell_type({x, i + 1}) != ' ')) {
-				e.push_back(&plat->get_desc()->get_cell({ x, i + 1 }));
+				e.push_back(plat->get_desc()->get_cell({ x, i + 1 }));
 			}
 		}
 		for (int i = plat->get_coords().x - 1; i >= plat->get_coords().x - radius + 1; i--) {
 			if ((insize({ i, y }, *plat->get_desc())) && (plat->get_desc()->get_cell_type({ i, y }) == ' ') && (insize({i - 1, y}, *plat->get_desc())) && (plat->get_desc()->get_cell_type({i - 1, y}) != ' ')) {
-				e.push_back(&plat->get_desc()->get_cell({ i - 1, x }));
+				e.push_back(plat->get_desc()->get_cell({ i - 1, x }));
 			}
 		}
 		for (int i = plat->get_coords().x + 1; i <= plat->get_coords().x + radius - 1; i++) {
 			if ((insize({ i, y }, *plat->get_desc())) && (plat->get_desc()->get_cell_type({ i, y }) == ' ') && (insize({i + 1, y}, *plat->get_desc())) && (plat->get_desc()->get_cell_type({i + 1, y}) != ' ')) {
-				e.push_back(&plat->get_desc()->get_cell({ i + 1, y }));
+				e.push_back(plat->get_desc()->get_cell({ i + 1, y }));
 			}
 		}
 		if ((insize({ x, y - 1 }, *plat->get_desc())) && (plat->get_desc()->get_cell_type({ x, y - 1 }) != ' ')) {
-			e.push_back(&plat->get_desc()->get_cell({ x, y - 1 }));
+			e.push_back(plat->get_desc()->get_cell({ x, y - 1 }));
 		}
 		if ((insize({ x, y + 1 }, *plat->get_desc())) && (plat->get_desc()->get_cell_type({ x, y + 1 }) != ' ')) {
-			e.push_back(&plat->get_desc()->get_cell({ x, y + 1 }));
+			e.push_back(plat->get_desc()->get_cell({ x, y + 1 }));
 		}
 		if ((insize({ x - 1, y }, *plat->get_desc())) && (plat->get_desc()->get_cell_type({ x - 1, y }) != ' ')) {
-			e.push_back(&plat->get_desc()->get_cell({ x - 1, y }));
+			e.push_back(plat->get_desc()->get_cell({ x - 1, y }));
 		}
 		if ((insize({ x + 1, y }, *plat->get_desc())) && (plat->get_desc()->get_cell_type({ x + 1, y }) != ' ')) {
-			e.push_back(&plat->get_desc()->get_cell({ x + 1, y }));
+			e.push_back(plat->get_desc()->get_cell({ x + 1, y }));
 		}
 		for (int i = plat->get_coords().x - 1, k = 0; i >= plat->get_coords().x - radius; i--, k++) {
 			for (int j = plat->get_coords().y - 1; j >= plat->get_coords().y - radius; j--) {
 				if ((insize({ i, j }, *plat->get_desc())) && ((plat->get_desc()->get_cell_type({ x - k, j }) == ' ') || ((plat->get_desc()->get_cell_type({i, y - k}) == ' '))) && (plat->get_desc()->get_cell_type({i, j}) != ' ')) {
-					e.push_back(&plat->get_desc()->get_cell({ i, j }));
+					e.push_back(plat->get_desc()->get_cell({ i, j }));
 				}
 			}
 		}
 		for (int i = plat->get_coords().x + 1, k = 0; i <= plat->get_coords().x + radius; i++, k++) {
 			for (int j = plat->get_coords().y - 1; j >= plat->get_coords().y - radius; j--) {
 				if ((insize({ i, j }, *plat->get_desc())) && ((plat->get_desc()->get_cell_type({ x + k, j }) == ' ') || ((plat->get_desc()->get_cell_type({i, y - k}) == ' '))) && (plat->get_desc()->get_cell_type({i, j}) != ' ')) {
-					e.push_back(&plat->get_desc()->get_cell({ i, j }));
+					e.push_back(plat->get_desc()->get_cell({ i, j }));
 				}
 			}
 		}
 		for (int i = plat->get_coords().x + 1, k = 0; i <= plat->get_coords().x + radius; i++, k++) {
 			for (int j = plat->get_coords().y + 1; j <= plat->get_coords().y + radius; j++) {
 				if ((insize({ i, j }, *plat->get_desc())) && ((plat->get_desc()->get_cell_type({ x + k, j }) == ' ') || ((plat->get_desc()->get_cell_type({i, y + k}) == ' '))) && (plat->get_desc()->get_cell_type({i, j}) != ' ')) {
-					e.push_back(&plat->get_desc()->get_cell({ i, j }));
+					e.push_back(plat->get_desc()->get_cell({ i, j }));
 				}
 			}
 		}
 		for (int i = plat->get_coords().x - 1, k = 0; i >= plat->get_coords().x - radius; i--, k++) {
 			for (int j = plat->get_coords().y + 1; j <= plat->get_coords().y + radius; j++) {
 				if ((insize({ i, j }, *plat->get_desc())) && ((plat->get_desc()->get_cell_type({ x - k, j }) == ' ') || ((plat->get_desc()->get_cell_type({i, y + k}) == ' '))) && (plat->get_desc()->get_cell_type({i, j}) != ' ')) {
-					e.push_back(&plat->get_desc()->get_cell({ i, j }));
+					e.push_back(plat->get_desc()->get_cell({ i, j }));
 				}
 			}
 		}
@@ -901,13 +920,26 @@ int armament::get_type() const noexcept {
 
 //other
 ostream& operator <<(ostream& out, const environment_descriptor& e) {
+	out << "  ";
+	for (int j = 1; j <= e.get_size()[0]; j++) {
+		out << j << " ";
+	}
+	out << "\n";
 	for (int i = 1; i <= e.get_size()[1]; i++) {
+		if (i < 10) {
+			out << i << "  ";
+		}
+		else {
+			out << i << " ";
+		}
 		for (int j = 1; j <= e.get_size()[0]; j++) {
 			out << e.get_cell_type({ j, i }) << " ";
 		}
-		out << "\n";
+		out << "|\n";
 	}
-	out << "--------------------";
+	for (int i = 0; i <= e.get_size()[0] * 2 + 2; i++) {
+		out << "-";
+	}
 	out << "\n";
 	return out;
 }
