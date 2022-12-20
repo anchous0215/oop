@@ -4,7 +4,7 @@
 #include "Vector.h"
 #include <vector>
 #include <string>
-using namespace std;
+//using namespace std;
 
 /// @brief envirenment descriptor, save size and elements
 class environment_descriptor {
@@ -32,7 +32,7 @@ public:
 	* @brief get environment element
 	* @param coords - coordinats of element
 	*/
-	environment_elem& get_cell(struct coord coords) const;
+	environment_elem* get_cell(struct coord coords) const;
 	/**
 	* @brief get type of element
 	* @param c - coordinats of element
@@ -58,6 +58,8 @@ public:
 	friend class scan_elem;
 };
 
+
+
 ///@brief strust for soordinats
 struct coord {
 	int x;
@@ -65,7 +67,10 @@ struct coord {
 	bool operator <(const coord& a) const;
 	bool operator ==(const coord& a) const;
 	bool operator !=(const coord& a) const;
+	coord& operator=(const coord& other);
 };
+
+
 
 ///@brief Artificial intelligence which maganes modules
 class AI {
@@ -94,6 +99,8 @@ public:
 	struct coord move_in(class mobil_platform& m) noexcept;
 };
 
+
+
 ///@brief class which save the AI and manages the environment descriptor
 class security_system {
 private:
@@ -118,7 +125,13 @@ public:
 	* @brief check if enemies in the enveronment descriptor
 	*/
 	int check() noexcept;
+
+	AI* get_ai() const noexcept {
+		return ai;
+	}
 };
+
+
 
 ///@brief parent class for all elements in environment descriptor and it is simple let
 class environment_elem {
@@ -146,6 +159,8 @@ public:
 	inline virtual void set_desc(environment_descriptor& d) noexcept {};
 };
 
+
+
 ///@brief class for element which can see the environment descriptor and move
 class scan_elem : public environment_elem {
 protected:
@@ -167,6 +182,8 @@ public:
 	virtual int get_val() const noexcept = 0;
 };
 
+
+
 ///@brief algorithm for move of enemy
 class algoritm {
 public:
@@ -178,6 +195,8 @@ public:
 	static struct coord algor(struct coord c, class environment_descriptor* d) noexcept;
 	friend class enemy;
 };
+
+
 
 class enemy : public scan_elem {
 public:
@@ -197,6 +216,8 @@ public:
 	inline virtual int get_val() const noexcept override;
 };
 
+
+
 ///@brief abstruct class for modul's platform
 class modul_platform : public scan_elem {
 protected:
@@ -215,7 +236,7 @@ public:
 	/**
 	* @brief getter for moduls in platform
 	*/
-	Vector <class modul*> get_moduls() const noexcept;
+	Vector <class modul*>& get_moduls() noexcept;
 	/**
 	* @brief add modul in platform
 	* @param m - modul
@@ -236,7 +257,6 @@ public:
 	void less_energy() noexcept;
 	/**
 	* @brief get type of element, for modul platform it return 2
-	* @param m - modul
 	*/
 	inline virtual int get_val()  const noexcept override;
 	/**
@@ -244,6 +264,8 @@ public:
 	*/
 	virtual int get_plat() const noexcept = 0;
 };
+
+
 
 ///@brief static platform which have energy supply
 class static_platform : public modul_platform {
@@ -261,11 +283,15 @@ public:
 	* @brief empty function because static platform can't move
 	*/
 	virtual void move(struct coord c) override {};
+	int get_supply() const noexcept {
+		return energy_supply;
+	}
 	/**
 	* @brief return type of modul platform
 	*/
 	inline virtual int get_plat() const noexcept override;
 };
+
 
 
 ///@brief mobil platform which can move and have speed
@@ -285,11 +311,16 @@ public:
 	* @brief return previously coordinates of platform
 	*/
 	coord get_prev() const noexcept;
+	void set_coord(const coord& c) {
+		prev_c = c;
+	}
 	/**
 	* @brief return type of modul platform
 	*/
 	inline virtual int get_plat() const noexcept override;
 };
+
+
 
 ///@brief abstruct class for moduls
 class modul {
@@ -331,6 +362,7 @@ public:
 };
 
 
+
 ///@brief abstruct class for moduls which can see the environment descriptor
 class coord_modul : public modul {
 protected:
@@ -357,12 +389,13 @@ public:
 	/**
 	* @brief return the environment elements in radius action of modul
 	*/
-	virtual vector <class environment_elem*> scan() const;
+	virtual Vector <class environment_elem*> scan() const;
 	/**
 	* @brief complete virtual function
 	*/
 	virtual void func() const noexcept = 0;
 };
+
 
 
 ///@brief modul ehich have energy supply and can have the net with other net moduls
@@ -372,7 +405,7 @@ private:
 	int connect;
 	int energy_supply;
 	///@brief moduls with which have connection
-	vector <class net_modul*> nets;
+	Vector <class net_modul*> nets;
 	class static_platform* stat_plat = nullptr;
 public:
 	/**
@@ -398,15 +431,15 @@ public:
 	/**
 	* @brief return modul's static platform
 	*/
-	inline class static_platform* get_stat_plat() const noexcept;
+	class static_platform* get_stat_plat() const noexcept;
 	/**
 	* @brief return net moduls in radius action
 	*/
-	vector <class net_modul*> update() const noexcept;
+	Vector <class net_modul*> update() const noexcept;
 	/**
 	* @brief return neibour net moduls of net moduls in radius action
 	*/
-	vector <class net_modul*> get_neib_par();
+	Vector <class net_modul*> get_neib_par();
 	/**
 	* @brief return can we have connect in net modul
 	* @param m - modul with which will connect
@@ -437,6 +470,7 @@ public:
 };
 
 
+
 ///@brief sensor can return the environment elements and have a type of sensor
 class sensor : public coord_modul {
 private:
@@ -454,13 +488,15 @@ public:
 	/**
 	* @brief return the environment elements
 	*/
-	virtual vector <class environment_elem*> scan() const override;
+	virtual Vector <class environment_elem*> scan() const override;
 	/**
 	* @brief return type of modul, for net modul it is 2
 	*/
 	virtual int get_type() const noexcept override;
 	virtual void func() const noexcept override {};
 };
+
+
 
 ///@brief armament can kill enemies and have energy type
 class armament :public modul {
