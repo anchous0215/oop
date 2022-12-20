@@ -53,7 +53,7 @@ TEST(methods, env) {
 	algoritm a;
 	enemy e(a);
 	d.insert_elem({ 4, 6 }, e);
-	ASSERT_EQ(&e, &d.get_cell({ 4, 6 }));
+	ASSERT_EQ(&e, d.get_cell({ 4, 6 }));
 	ASSERT_ANY_THROW(d.get_cell({ 1, 1 }));
 	cout << d;
 	ASSERT_ANY_THROW(d.insert_elem({1, 3}, el));
@@ -75,7 +75,7 @@ TEST(methods, AI) {
 	sensor s2;
 	armament a1;
 	armament a2;
-	d.insert_elem({ 5, 5 }, s);
+	d.insert_elem({5, 5}, s);
 	d.insert_elem({ 5, 6 }, m);
 	s.insert_modul(n1);
 	s.insert_modul(s1);
@@ -126,7 +126,7 @@ TEST(methods, scan_elem) {
 	ASSERT_EQ(c, m.get_coords());
 	c = { 0, 0 };
 	ASSERT_EQ(c, s.get_coords());
-	ASSERT_EQ(&m, &d.get_cell({1, 1}));
+	ASSERT_EQ(&m, d.get_cell({1, 1}));
 	ASSERT_ANY_THROW(m.move({ -1, 2 }));
 	ASSERT_ANY_THROW(m.move({ 1, 20 }));
 }
@@ -197,7 +197,7 @@ TEST(methods, mod_plat) {
 	d.insert_elem({ 1, 2 }, s);
 	m.insert_modul(net);
 	m.insert_modul(n);
-	ASSERT_EQ(n, *m.get_moduls()[1]);
+	ASSERT_EQ(&n, m.get_moduls()[1]);
 	m.insert_modul(a);
 	ASSERT_EQ(a, *m.get_moduls()[2]);
 	m.del_modul(n);
@@ -319,7 +319,7 @@ TEST(methods, coord_mod) {
 	d.insert_elem({ 1, 1 }, p);
 	static_platform st;
 	d.insert_elem({ 1, 2 }, st);
-	vector <environment_elem*> e = n.scan();
+	Vector <environment_elem*> e = n.scan();
 	ASSERT_EQ(&st, e[0]);
 }
 
@@ -343,7 +343,7 @@ TEST(methods, net_mod) {
 	n1.unset_platform();
 	ASSERT_EQ(nullptr, n1.get_stat_plat());
 	m1.insert_modul(n1);
-	vector <net_modul*> mod = n1.update();
+	Vector <net_modul*> mod = n1.update();
 	ASSERT_EQ(1, mod.size());
 	ASSERT_EQ(&n2, mod[0]);
 	net_modul n3;
@@ -379,7 +379,7 @@ TEST(methods, sensor) {
 	d.insert_elem({ 5, 5 }, m);
 	m.insert_modul(n);
 	m.insert_modul(s);
-	vector <environment_elem*> v = s.scan();
+	Vector <environment_elem*> v = s.scan();
 	ASSERT_EQ(0, v.size());
 	d.insert_elem({ 5, 4 }, e);
 	v = s.scan();
